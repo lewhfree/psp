@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(hello)
-
-add_executable(${PROJECT_NAME} main.c)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+add_executable(${PROJECT_NAME} main.c include/stlloader.c include/boilerplate.c)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     pspdebug
     pspdisplay
     pspge
+    pspgu
 )
 
 # Create an EBOOT.PBP file
