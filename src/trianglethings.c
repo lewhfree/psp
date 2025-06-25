@@ -1,7 +1,7 @@
 #include <math.h>
 #include "trianglethings.h"
 #include "stlloader.h"
-#define MAX_TRIANGLES 8192
+#define MAX_TRIANGLES 65535
 
 struct Vertex {
     float u, v;

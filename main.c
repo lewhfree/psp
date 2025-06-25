@@ -5,6 +5,7 @@
 #include <pspiofilemgr.h>
 #include <psprtc.h>
 #include <pspdebug.h>
+#include <pspctrl.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -25,7 +26,9 @@ static unsigned int __attribute__((aligned(16))) list[262144];
 
 int main(int argc, char *argv[]) {
     setup_callbacks();
-
+    SceCtrlData pad;
+    sceCtrlSetSamplingCycle(0);
+    sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
     STLModel model;
     if (load_binary_stl("ms0:/PSP/GAME/hello/cube.stl", &model) == 0) {
         sceKernelDelayThread(3 * 1000000);
@@ -52,8 +55,8 @@ int main(int argc, char *argv[]) {
     sceGuEnable(GU_DEPTH_TEST);
     sceGuFrontFace(GU_CW);
     sceGuShadeModel(GU_SMOOTH);
-//    sceGuEnable(GU_CULL_FACE);
-    sceGuDisable(GU_TEXTURE_2D);  // No textures needed
+    //sceGuEnable(GU_CULL_FACE);
+    sceGuDisable(GU_TEXTURE_2D);
     //sceGuEnable(GU_CLIP_PLANES);
     sceGuFinish();
     sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
@@ -62,8 +65,34 @@ int main(int argc, char *argv[]) {
     sceGuDisplay(GU_TRUE);
 
     int val = 0;
-
+    float playerZ = -12.0f;
+    float playerX = 0.0f;
+    float playerY = 0.0f;
+    float playerYaw = 0.0f;
+    float playerPitch = 0.0f;
     while (1) {
+        sceCtrlReadBufferPositive(&pad, 1);
+        float aX = (pad.Lx- 127.0f) / 127.0f;
+        float aY = -(pad.Ly- 127.0f) / 127.0f;
+        
+        playerX = playerX + aX;
+        playerZ = playerZ + aY;
+        
+        if (pad.Buttons & PSP_CTRL_TRIANGLE){
+            //LOOK UP
+        }
+        if (pad.Buttons & PSP_CTRL_CROSS){
+            //LOOK DOWN
+        }
+        if (pad.Buttons & PSP_CTRL_CIRCLE){
+            //LOOK RIGHT
+        }
+        if (pad.Buttons & PSP_CTRL_SQUARE){
+            //LOOK LEFT
+        }
+
+        ScePspFVector3 realEye = {playerX, playerY, playerZ};
+        ScePspFVector3 realCenter = {0.0f, 0.0f, 0.0f}; //lookingat
         sceGuStart(GU_DIRECT, list);
 
         sceGuClearColor(0xFFED9564);
@@ -76,9 +105,10 @@ int main(int argc, char *argv[]) {
 
         sceGumMatrixMode(GU_VIEW);
         sceGumLoadIdentity();
-        ScePspFVector3 eye = { 0.0f, 0.0f, -12.0f };      // Camera position
-        ScePspFVector3 center = { 0.0f, 0.0f, 0.0f };   // Where the camera is looking
-        ScePspFVector3 up = { 0.0f, 1.0f, 0.0f };
+        ScePspFVector3 eye = realEye;      // Camera position
+        ScePspFVector3 center = realCenter;   // Where the camera is looking
+        ScePspFVector3 up = {0.0f, 1.0f, 0.0f};
+
         sceGumLookAt(&eye, &center, &up);
 
         sceGumMatrixMode(GU_MODEL);
