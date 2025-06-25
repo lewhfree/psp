@@ -2,15 +2,13 @@
 #include <pspdisplay.h>
 #include <pspgu.h>
 #include <pspgum.h>
-#include <pspiofilemgr.h>
-#include <psprtc.h>
+//#include <pspiofilemgr.h>
 #include <pspdebug.h>
-#include <pspctrl.h>
-
-#include <string.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <math.h>
+#include <pspctrl.h> //keypad
+#include <string.h> //strcp, file path
+#include <stdlib.h> //malloc/free
+#include <inttypes.h> //uint
+#include <math.h> //sqrt sin
 
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
@@ -18,10 +16,10 @@
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
-
+#define ANGLE_STEP (0.1f)
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
-
+//command/display list
 static unsigned int __attribute__((aligned(16))) list[262144];
 
 int main(int argc, char *argv[]) {
@@ -65,34 +63,47 @@ int main(int argc, char *argv[]) {
     sceGuDisplay(GU_TRUE);
 
     int val = 0;
-    float playerZ = -12.0f;
+    float playerZ = -20.0f;
     float playerX = 0.0f;
     float playerY = 0.0f;
     float playerYaw = 0.0f;
     float playerPitch = 0.0f;
+
+    float playerCenterX = 0.0f;
+    float playerCenterY = 0.0f;
+    float playerCenterZ = 0.0f;
+    
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
         float aX = (pad.Lx- 127.0f) / 127.0f;
         float aY = -(pad.Ly- 127.0f) / 127.0f;
         
-        playerX = playerX + aX;
+        playerX = playerX - aX;
         playerZ = playerZ + aY;
         
         if (pad.Buttons & PSP_CTRL_TRIANGLE){
-            //LOOK UP
+            playerPitch += ANGLE_STEP;
         }
         if (pad.Buttons & PSP_CTRL_CROSS){
-            //LOOK DOWN
+            playerPitch -= ANGLE_STEP;
         }
         if (pad.Buttons & PSP_CTRL_CIRCLE){
-            //LOOK RIGHT
+            playerYaw -= ANGLE_STEP;
         }
         if (pad.Buttons & PSP_CTRL_SQUARE){
-            //LOOK LEFT
+            playerYaw += ANGLE_STEP;
         }
 
+        // playerCenterX = playerX + sinf(playerYaw);
+        // playerCenterZ = playerZ + cosf(playerYaw);
+        // playerCenterY = playerY + sinf(playerPitch);
+        playerCenterX = playerX + sinf(playerYaw) * cosf(playerPitch);
+        playerCenterY = playerY + sinf(playerPitch);
+        playerCenterZ = playerZ + cosf(playerYaw) * cosf(playerPitch);
+
         ScePspFVector3 realEye = {playerX, playerY, playerZ};
-        ScePspFVector3 realCenter = {0.0f, 0.0f, 0.0f}; //lookingat
+        ScePspFVector3 realCenter = {playerCenterX, playerCenterY, playerCenterZ}; 
+
         sceGuStart(GU_DIRECT, list);
 
         sceGuClearColor(0xFFED9564);
