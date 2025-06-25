@@ -2,7 +2,6 @@
 #include <pspdisplay.h>
 #include <pspgu.h>
 #include <pspgum.h>
-//#include <pspiofilemgr.h>
 #include <pspdebug.h>
 #include <pspctrl.h> //keypad
 #include <string.h> //strcp, file path
@@ -19,7 +18,6 @@
 #define ANGLE_STEP (0.1f)
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
-//command/display list
 static unsigned int __attribute__((aligned(16))) list[262144];
 
 int main(int argc, char *argv[]) {
@@ -75,12 +73,17 @@ int main(int argc, char *argv[]) {
     
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
-        float aX = (pad.Lx- 127.0f) / 127.0f;
-        float aY = -(pad.Ly- 127.0f) / 127.0f;
-        
-        playerX = playerX - aX;
-        playerZ = playerZ + aY;
-        
+        float aX = (pad.Lx - 128.0f) / 128.0f;
+        float aY = -(pad.Ly - 128.0f) / 128.0f;
+
+        float forwardX = sinf(playerYaw);
+        float forwardZ = cosf(playerYaw);
+        float rightX = -cosf(playerYaw);
+        float rightZ = sinf(playerYaw);
+
+        playerX += forwardX * aY + rightX * aX;
+        playerZ += forwardZ * aY + rightZ * aX;
+                
         if (pad.Buttons & PSP_CTRL_TRIANGLE){
             playerPitch += ANGLE_STEP;
         }
@@ -94,9 +97,6 @@ int main(int argc, char *argv[]) {
             playerYaw += ANGLE_STEP;
         }
 
-        // playerCenterX = playerX + sinf(playerYaw);
-        // playerCenterZ = playerZ + cosf(playerYaw);
-        // playerCenterY = playerY + sinf(playerPitch);
         playerCenterX = playerX + sinf(playerYaw) * cosf(playerPitch);
         playerCenterY = playerY + sinf(playerPitch);
         playerCenterZ = playerZ + cosf(playerYaw) * cosf(playerPitch);
@@ -127,9 +127,10 @@ int main(int argc, char *argv[]) {
         {
             ScePspFVector3 pos = { 0, 0, 0 };
             ScePspFVector3 rot = {
-                val * 0.05f,// * 0.79f * (GU_PI / 180.0f),
-                val * 0.05f,//lib32 * 0.98f * (GU_PI / 180.0f),
-                val * 0.05f// * 1.32f * (GU_PI / 180.0f)
+                // val * 0.05f,// * 0.79f * (GU_PI / 180.0f),
+                // val * 0.05f,//lib32 * 0.98f * (GU_PI / 180.0f),
+                // val * 0.05f// * 1.32f * (GU_PI / 180.0f)
+            0.0f, 0.0f, 0.0f
             };
             sceGumTranslate(&pos);
             sceGumRotateXYZ(&rot);
