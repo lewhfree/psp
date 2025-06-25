@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
@@ -23,22 +24,62 @@ PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
 
 struct Vertex {
-    float u, v;
-    unsigned int color;
-    float x, y, z;
+    float u, v;           // Texture coordinates (required even if not used for proper alignment)
+    unsigned int color;   // Color
+    float nx, ny, nz;     // Normal vector
+    float x, y, z;        // Position (must be last)
 };
 
 #define MAX_TRIANGLES 4096
 static struct Vertex __attribute__((aligned(16))) dynamicVertices[MAX_TRIANGLES * 3];
+
+unsigned int normalToColor(float nx, float ny, float nz) {
+    float len = sqrtf(nx*nx + ny*ny + nz*nz);
+    if (len > 0.0f) {
+        nx /= len;
+        ny /= len;
+        nz /= len;
+    }
+    
+    // Convert from [-1,1] range to [0,255] range
+    unsigned char r = (unsigned char)((nx + 1.0f) * 0.5f * 255.0f);
+    unsigned char g = (unsigned char)((ny + 1.0f) * 0.5f * 255.0f);
+    unsigned char b = (unsigned char)((nz + 1.0f) * 0.5f * 255.0f);
+    unsigned char a = 255; // Full alpha
+    
+    return (a << 24) | (b << 16) | (g << 8) | r;
+}
 
 void convertTrianglesToVertices(const Triangle* triangles, size_t numTriangles) {
     if (numTriangles > MAX_TRIANGLES) return;
 
     for (size_t i = 0; i < numTriangles; ++i) {
         const Triangle* tri = &triangles[i];
-        dynamicVertices[i * 3 + 0] = (struct Vertex){0.0f, 0.0f, 0x00000000, tri->v1.x, tri->v1.y, tri->v1.z};
-        dynamicVertices[i * 3 + 1] = (struct Vertex){0.0f, 0.0f, 0x00000000, tri->v2.x, tri->v2.y, tri->v2.z};
-        dynamicVertices[i * 3 + 2] = (struct Vertex){0.0f, 0.0f, 0x00000000, tri->v3.x, tri->v3.y, tri->v3.z};
+        
+        float nx = tri->normal.x;
+        float ny = tri->normal.y;
+        float nz = tri->normal.z;
+        
+        unsigned int color = normalToColor(nx, ny, nz);
+        
+        dynamicVertices[i * 3 + 0] = (struct Vertex){
+            0.0f, 0.0f,    // Texture coordinates (not used but needed)
+            color,         // Color
+            nx, ny, nz,    // Normal
+            tri->v1.x, tri->v1.y, tri->v1.z  // Position
+        };
+        dynamicVertices[i * 3 + 1] = (struct Vertex){
+            0.0f, 0.0f,
+            color,
+            nx, ny, nz,
+            tri->v2.x, tri->v2.y, tri->v2.z
+        };
+        dynamicVertices[i * 3 + 2] = (struct Vertex){
+            0.0f, 0.0f,
+            color,
+            nx, ny, nz,
+            tri->v3.x, tri->v3.y, tri->v3.z
+        };
     }
 }
 
@@ -48,11 +89,15 @@ int main(int argc, char *argv[]) {
     pspDebugScreenPrintf("Loading STL...\n");
 
     STLModel model;
-    load_binary_stl("ms0:/PSP/GAME/hello/cube.stl", &model);
+    if (load_binary_stl("ms0:/PSP/GAME/hello/cube.stl", &model) == 0) {
+        pspDebugScreenPrintf("Failed to load STL file!\n");
+        sceKernelDelayThread(3 * 1000000);
+        return -1;
+    }
 
-    pspDebugScreenPrintf("Model OK: %u triangles\n", model.triangleCount);
+    pspDebugScreenPrintf("Model OK: %u triangles\n", (unsigned int)model.triangleCount);
     convertTrianglesToVertices(model.triangles, model.triangleCount);
-    sceKernelDelayThread(1 * 1000000);
+//    sceKernelDelayThread(1 * 1000000);
 
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
@@ -60,7 +105,7 @@ int main(int argc, char *argv[]) {
 
     sceGuInit();
     sceGuStart(GU_DIRECT, list);
-    sceGuDrawBuffer(GU_PSM_8888, fbp0, BUF_WIDTH);
+    sceGuDrawBuffer(GU_PSM_5650, fbp0, BUF_WIDTH);
     sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, fbp1, BUF_WIDTH);
     sceGuDepthBuffer(zbp, BUF_WIDTH);
     sceGuOffset(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2));
@@ -72,9 +117,9 @@ int main(int argc, char *argv[]) {
     sceGuEnable(GU_DEPTH_TEST);
     sceGuFrontFace(GU_CW);
     sceGuShadeModel(GU_SMOOTH);
-    sceGuEnable(GU_CULL_FACE);
-    sceGuEnable(GU_TEXTURE_2D);
-    sceGuEnable(GU_CLIP_PLANES);
+//    sceGuEnable(GU_CULL_FACE);
+    sceGuDisable(GU_TEXTURE_2D);  // No textures needed
+    //sceGuEnable(GU_CLIP_PLANES);
     sceGuFinish();
     sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
 
@@ -87,48 +132,48 @@ int main(int argc, char *argv[]) {
     while (1) {
         sceGuStart(GU_DIRECT, list);
 
-        sceGuClearColor(0xFFED9564);
+        sceGuClearColor(0xFF10ff80);
         sceGuClearDepth(0);
         sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 
         sceGumMatrixMode(GU_PROJECTION);
         sceGumLoadIdentity();
-        sceGumPerspective(75.0f, 16.0f / 9.0f, 0.5f, 1000.0f);
+        sceGumPerspective(80.0f, 16.0f / 9.0f, 0.5f, 1000.0f);
 
         sceGumMatrixMode(GU_VIEW);
         sceGumLoadIdentity();
+        ScePspFVector3 eye = { 0.0f, 0.0f, -50.0f };      // Camera position
+        ScePspFVector3 center = { 0.0f, 0.0f, 0.0f };   // Where the camera is looking
+        ScePspFVector3 up = { 0.0f, 1.0f, 0.0f };
+        sceGumLookAt(&eye, &center, &up);
 
         sceGumMatrixMode(GU_MODEL);
         sceGumLoadIdentity();
         {
-            ScePspFVector3 pos = { 0, 0, -2.5f };
-            ScePspFVector3 rot = {
-                val * 0.79f * (GU_PI / 180.0f),
-                val * 0.98f * (GU_PI / 180.0f),
-                val * 1.32f * (GU_PI / 180.0f)
-            };
+            ScePspFVector3 pos = { 0, 0, 0 };
+            // ScePspFVector3 rot = {
+            //     val * 0.79f * (GU_PI / 180.0f),
+            //     val * 0.98f * (GU_PI / 180.0f),
+            //     val * 1.32f * (GU_PI / 180.0f)
+            // };
+            float time = val * 0.016f;  // Assuming ~60fps, this gives smooth time progression
+ScePspFVector3 rot = {
+    fmodf(time * 0.79f, 2.0f * GU_PI),
+    fmodf(time * 0.98f, 2.0f * GU_PI),
+    fmodf(time * 1.32f, 2.0f * GU_PI)
+};
             sceGumTranslate(&pos);
             sceGumRotateXYZ(&rot);
         }
 
-        sceGuTexMode(GU_PSM_4444, 0, 0, 0);
-        sceGuTexFunc(GU_TFX_ADD, GU_TCC_RGB);
-        sceGuTexEnvColor(0xffff00);
-        sceGuTexFilter(GU_LINEAR, GU_LINEAR);
-        sceGuTexScale(1.0f, 1.0f);
-        sceGuTexOffset(0.0f, 0.0f);
-        sceGuAmbientColor(0xffffffff);
-
-        // Draw STL model
         sceGumDrawArray(
             GU_TRIANGLES,
-            GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
+            GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_NORMAL_32BITF | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
             model.triangleCount * 3,
             0,
             dynamicVertices);
 
-        val++;
-
+        val = (val + 1) % 100;
         uint64_t old = ticks;
         sceRtcGetCurrentTick(&ticks);
         old = ticks - old;
@@ -138,7 +183,7 @@ int main(int argc, char *argv[]) {
         old = (uint8_t) fps;
         int intold = (int) old;
         pspDebugScreenSetXY(0, 0);
-        pspDebugScreenPrintf("%" PRIu8 "\n", intold);
+        pspDebugScreenPrintf("FPS: %d\n", intold);
 
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
@@ -149,4 +194,3 @@ int main(int argc, char *argv[]) {
     free_stl(&model);
     return 0;
 }
-
