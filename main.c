@@ -12,6 +12,8 @@
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
 #include "include/trianglethings.h"
+#include "include/render_model.h"
+
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
@@ -31,6 +33,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+   
     convertTrianglesToVertices(model.triangles, model.triangleCount);
 
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
@@ -73,9 +76,23 @@ int main(int argc, char *argv[]) {
     
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
-        float aX = (pad.Lx - 128.0f) / 128.0f;
-        float aY = -(pad.Ly - 128.0f) / 128.0f;
 
+        float rawX = pad.Lx - 128.0f;
+        float rawY = pad.Ly - 128.0f;
+
+        float magnitude = sqrtf(rawX * rawX + rawY * rawY);
+
+        float DEADZONE = 20.0f;
+
+        float aX = 0.0f;
+        float aY = 0.0f;
+
+        if (magnitude > DEADZONE) {
+            float scale = (magnitude - DEADZONE) / (127.0f - DEADZONE);
+            aX = (rawX / magnitude) * scale;
+            aY = -(rawY / magnitude) * scale;
+        }
+       
         float forwardX = sinf(playerYaw);
         float forwardZ = cosf(playerYaw);
         float rightX = -cosf(playerYaw);
@@ -130,7 +147,7 @@ int main(int argc, char *argv[]) {
                 // val * 0.05f,// * 0.79f * (GU_PI / 180.0f),
                 // val * 0.05f,//lib32 * 0.98f * (GU_PI / 180.0f),
                 // val * 0.05f// * 1.32f * (GU_PI / 180.0f)
-            0.0f, 0.0f, 0.0f
+            1.5f, 0.0f, 0.0f
             };
             sceGumTranslate(&pos);
             sceGumRotateXYZ(&rot);

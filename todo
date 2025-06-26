@@ -1,3 +1,14 @@
 [] - controls to move camera in world space. Should be easy, by moving the viewpoint offsets. see input tutorial, and the offsets are where 12.0f is in main.c
 [] - Render multiple objects.
 [] - Figure out why very high poly objects break rendering.
+
+
+There should be a table or file for the world/map data.
+It should have entries of what index the tile is, and what the filename.
+[1, 2, 3, 4 ]
+[5, 6, 7, 8 ]
+[9,10,11,12 ]
+[13,14,15,16]
+
+This should facilitate easy unloading and loading dynamically.
+For now, just have it render 16 flat planes, but once collision is implementated, move to shapes.

@@ -6,7 +6,8 @@ include_directories(include)
 add_executable(${PROJECT_NAME} main.c
     src/stlloader.c
     src/boilerplate.c
-    src/trianglethings.c)
+    src/trianglethings.c
+    src/render_model.c)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     pspdebug

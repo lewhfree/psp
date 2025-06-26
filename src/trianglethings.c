@@ -10,7 +10,6 @@ struct Vertex {
     float x, y, z;
 };
 
-// We need to expose this buffer somehow if used externally
 struct Vertex __attribute__((aligned(16))) dynamicVertices[MAX_TRIANGLES * 3];
 
 unsigned int normalToColor(float nx, float ny, float nz) {
@@ -31,7 +30,7 @@ unsigned int normalToColor(float nx, float ny, float nz) {
 
 void convertTrianglesToVertices(const Triangle* triangles, size_t numTriangles) {
     if (numTriangles > MAX_TRIANGLES) return;
-
+    
     for (size_t i = 0; i < numTriangles; ++i) {
         const Triangle* tri = &triangles[i];
         float nx = tri->normal.x;
