@@ -12,25 +12,43 @@
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
 #include "include/render_model.h"
+// #include "include/tiles.h"
 
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
 #define ANGLE_STEP (0.1f)
-
+#define GRIDW 2
+#define GRIDH 2
+#define GROUNDSIZE 200
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
 
 int main(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv; //use this to later fix paths. full path needed rn, first argument is path to exe
     setup_callbacks();
     SceCtrlData pad;
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 
     STLModel teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl");
-    STLModel cube = loadModel("ms0:/PSP/GAME/hello/cube.stl");
+    STLModel *groundArray[GRIDW][GRIDH];
+    char *filenames[GRIDW][GRIDH];
 
+    filenames[0][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
+    filenames[0][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
+    filenames[1][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
+    filenames[1][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
+
+    for(int i = 0; i < GRIDW; i++){
+        for(int j = 0; j < GRIDH; j++){
+            STLModel temp = loadModel(filenames[i][j]);
+            groundArray[i][j] = &temp;
+        }
+    }
+    
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* zbp  = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_4444);
@@ -67,7 +85,7 @@ int main(int argc, char *argv[]) {
     float playerCenterX = 0.0f;
     float playerCenterY = 0.0f;
     float playerCenterZ = 0.0f;
-    
+    float pi32 = 3 * GU_PI / 2;    
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
 
@@ -112,18 +130,19 @@ int main(int argc, char *argv[]) {
         playerCenterY = playerY + sinf(playerPitch);
         playerCenterZ = playerZ + cosf(playerYaw) * cosf(playerPitch);
 
-        ScePspFVector3 realEye = {playerX, playerY, playerZ};
-        ScePspFVector3 realCenter = {playerCenterX, playerCenterY, playerCenterZ}; 
+        ScePspFVector3 realEye = {playerX, playerY + 50, playerZ};
+        ScePspFVector3 realCenter = {playerCenterX, playerCenterY + 50, playerCenterZ}; 
 
         sceGuStart(GU_DIRECT, list);
 
-        sceGuClearColor(0xFFED9564);
+        // sceGuClearColor(0xFFED9564);
+        sceGuClearColor(0x00000000);
         sceGuClearDepth(0);
         sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 
         sceGumMatrixMode(GU_PROJECTION);
         sceGumLoadIdentity();
-        sceGumPerspective(80.0f, 16.0f / 9.0f, 0.5f, 1000.0f);
+        sceGumPerspective(70.0f, 16.0f / 9.0f, 0.5f, 3000.0f);
 
         sceGumMatrixMode(GU_VIEW);
         sceGumLoadIdentity();
@@ -133,13 +152,16 @@ int main(int argc, char *argv[]) {
         sceGumLookAt(&eye, &center, &up);
 
         ScePspFVector3 modelpos = {0, 10.0f, 0};
-        ScePspFVector3 modelrot = {1.5f, 0.0f, 0.0f};
+        ScePspFVector3 modelrot = {pi32, 0.0f, 0.0f};
         renderModel(&teapot, modelpos, modelrot);
 
-
-        ScePspFVector3 cubep = {0, 0, 0};
-        ScePspFVector3 cuber = {0, 0, 0};
-        renderModel(&cube, cubep, cuber);
+        for(int i = 0; i < GRIDW; i++){
+            for (int j = 0; j < GRIDH; j++){
+                ScePspFVector3 platePos = {GROUNDSIZE * i, 0, GROUNDSIZE * j};
+                ScePspFVector3 plateRot = {pi32, 0, 0};
+                renderModel(groundArray[i][j], platePos, plateRot);
+            }
+        }
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();
