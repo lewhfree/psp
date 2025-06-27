@@ -17,9 +17,10 @@
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
 #define ANGLE_STEP (0.1f)
-#define GRIDW 2
-#define GRIDH 2
+#define GRIDW 10
+#define GRIDH 10
 #define GROUNDSIZE 200
+#define VIEW_DISTANCE 1000.0f
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
@@ -32,17 +33,18 @@ int main(int argc, char *argv[]) {
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 
+   
     STLModel* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl");
     STLModel *groundArray[GRIDW][GRIDH];
     char *filenames[GRIDW][GRIDH];
     uint8_t isLoaded[GRIDW][GRIDH];
-    filenames[0][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
-    filenames[0][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
-    filenames[1][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
-    filenames[1][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
-    // here loadmodel is used. I could add something that loads/unloads only if im in range;
+    // filenames[0][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
+    // filenames[0][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
+    // filenames[1][0] = "ms0:/PSP/GAME/hello/plane0102.stl";
+    // filenames[1][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
     for(int i = 0; i < GRIDW; i++){
         for(int j = 0; j < GRIDH; j++){
+            filenames[i][j] = "ms0:/PSP/GAME/hello/plane0102.stl";
             STLModel * temp = loadModel(filenames[i][j]);
             groundArray[i][j] = temp;
             isLoaded[i][j] = 1;
@@ -65,11 +67,11 @@ int main(int argc, char *argv[]) {
     sceGuEnable(GU_SCISSOR_TEST);
     sceGuDepthFunc(GU_GEQUAL);
     sceGuEnable(GU_DEPTH_TEST);
-    sceGuFrontFace(GU_CW);
+    sceGuFrontFace(GU_CCW);
     sceGuShadeModel(GU_SMOOTH);
-    //sceGuEnable(GU_CULL_FACE);
+    sceGuEnable(GU_CULL_FACE);
     sceGuDisable(GU_TEXTURE_2D);
-    //sceGuEnable(GU_CLIP_PLANES);
+    sceGuEnable(GU_CLIP_PLANES);
     sceGuFinish();
     sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
 
@@ -126,7 +128,6 @@ int main(int argc, char *argv[]) {
         if (pad.Buttons & PSP_CTRL_SQUARE){
             playerYaw += ANGLE_STEP;
         }
-
         playerCenterX = playerX + sinf(playerYaw) * cosf(playerPitch);
         playerCenterY = playerY + sinf(playerPitch);
         playerCenterZ = playerZ + cosf(playerYaw) * cosf(playerPitch);
@@ -163,13 +164,13 @@ int main(int argc, char *argv[]) {
                 float distance = sqrtf(powf(platePos.x - eye.x, 2) + powf(platePos.y - eye.y, 2) + powf(platePos.z - eye.z, 2));
                 if(isLoaded[i][j]){
                     renderModel(groundArray[i][j], platePos, plateRot);
-                    if((distance > 500.0f) && (isLoaded[i][j])){
+                    if((distance > VIEW_DISTANCE) && (isLoaded[i][j])){
                         freeModel(groundArray[i][j]);
                         groundArray[i][j] = NULL;
                         isLoaded[i][j] = 0;
                     }
                 } else {
-                    if((distance < 500.0f) && !(isLoaded[i][j])){
+                    if((distance < VIEW_DISTANCE) && !(isLoaded[i][j])){
                         STLModel* temp = loadModel(filenames[i][j]);
                         groundArray[i][j] = temp;
                         isLoaded[i][j] = 1;

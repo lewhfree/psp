@@ -1,8 +1,8 @@
 [x] - controls to move camera in world space. Should be easy, by moving the viewpoint offsets. see input tutorial, and the offsets are where 12.0f is in main.c
 [x] - Render multiple objects.
 [x] - Figure out why very high poly objects break rendering.
-[] - Make the ground system have checking if you are within a radius of the plane to load it.
-[] - tiling ground system. Should load an stl for each tile, just planes for now. see down below
+[x] - Make the ground system have checking if you are within a radius of the plane to load it.
+[x] - tiling ground system. Should load an stl for each tile, just planes for now. see down below
 [] - simple collisions. collision and models should be seperate. The dev should call a function with arguments like type, shape, size, dimensions. Then it should be added to the "scene", and rendered.
 	Its a little verbose, but is a lot simpler. See AABB, SAT, Ray-plane collisions
 [] - implement an image loader. simple, only accept bitmap images, or maybe others if the hardware supports it nicely	
@@ -19,3 +19,8 @@ It should have entries of what index the tile is, and what the filename.
 
 This should facilitate easy unloading and loading dynamically.
 For now, just have it render 16 flat planes, but once collision is implementated, move to shapes.
+
+
+I think the next real step to do will be phyisics/gravity. It is the most important that I get out of the way now.
+Tie the camera to a solid object that has collisions on, so i don't have to make a weird exception for the user and can easily apply the same rules for other objects
+Easy easy easy.
