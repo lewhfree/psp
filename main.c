@@ -12,7 +12,6 @@
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
 #include "include/render_model.h"
-// #include "include/tiles.h"
 
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
@@ -33,19 +32,20 @@ int main(int argc, char *argv[]) {
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 
-    STLModel teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl");
+    STLModel* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl");
     STLModel *groundArray[GRIDW][GRIDH];
     char *filenames[GRIDW][GRIDH];
-
+    uint8_t isLoaded[GRIDW][GRIDH];
     filenames[0][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
     filenames[0][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
     filenames[1][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
     filenames[1][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
-
+    // here loadmodel is used. I could add something that loads/unloads only if im in range;
     for(int i = 0; i < GRIDW; i++){
         for(int j = 0; j < GRIDH; j++){
-            STLModel temp = loadModel(filenames[i][j]);
-            groundArray[i][j] = &temp;
+            STLModel * temp = loadModel(filenames[i][j]);
+            groundArray[i][j] = temp;
+            isLoaded[i][j] = 1;
         }
     }
     
@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
     float playerCenterY = 0.0f;
     float playerCenterZ = 0.0f;
     float pi32 = 3 * GU_PI / 2;    
+
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
 
@@ -153,21 +154,36 @@ int main(int argc, char *argv[]) {
 
         ScePspFVector3 modelpos = {0, 10.0f, 0};
         ScePspFVector3 modelrot = {pi32, 0.0f, 0.0f};
-        renderModel(&teapot, modelpos, modelrot);
+        renderModel(teapot, modelpos, modelrot);
 
         for(int i = 0; i < GRIDW; i++){
             for (int j = 0; j < GRIDH; j++){
                 ScePspFVector3 platePos = {GROUNDSIZE * i, 0, GROUNDSIZE * j};
                 ScePspFVector3 plateRot = {pi32, 0, 0};
-                renderModel(groundArray[i][j], platePos, plateRot);
+                float distance = sqrtf(powf(platePos.x - eye.x, 2) + powf(platePos.y - eye.y, 2) + powf(platePos.z - eye.z, 2));
+                if(isLoaded[i][j]){
+                    renderModel(groundArray[i][j], platePos, plateRot);
+                    if((distance > 500.0f) && (isLoaded[i][j])){
+                        freeModel(groundArray[i][j]);
+                        groundArray[i][j] = NULL;
+                        isLoaded[i][j] = 0;
+                    }
+                } else {
+                    if((distance < 500.0f) && !(isLoaded[i][j])){
+                        STLModel* temp = loadModel(filenames[i][j]);
+                        groundArray[i][j] = temp;
+                        isLoaded[i][j] = 1;
+                    }
+                }
             }
         }
+        //freeing
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();
         sceGuSwapBuffers();
     }
 
-    free_stl(&teapot);
+    free_stl(teapot);
     return 0;
 }

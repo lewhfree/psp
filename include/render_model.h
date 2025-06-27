@@ -3,7 +3,7 @@
 
 #include "stlloader.h"
 #include <pspgu.h>
-STLModel loadModel(char* filename);
+STLModel* loadModel(char* filename);
 void freeModel(STLModel* model);
 void renderModel(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation);
 

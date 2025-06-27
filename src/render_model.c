@@ -1,19 +1,20 @@
 #include <pspgu.h>
 #include <pspgum.h>
 #include <pspkernel.h>
+#include <stdlib.h>
 
 #include "../include/stlloader.h"
 #include "../include/render_model.h"
 
-STLModel loadModel(char* filename){
-    STLModel model;
-    if(!load_binary_stl(filename, &model)) {
-        model.triangles = NULL;
-        model.vertices = NULL;
-        model.triangleCount = 0;
+STLModel* loadModel(char* filename){
+    STLModel* model = malloc(sizeof(STLModel));
+    if(!load_binary_stl(filename, model)) {
+        model->triangles = NULL;
+        model->vertices = NULL;
+        model->triangleCount = 0;
     }
     
-    if(model.triangleCount == 0) {
+    if(model->triangleCount == 0) {
         sceKernelDelayThread(3000000);
         sceKernelExitGame();
     }
@@ -21,7 +22,8 @@ STLModel loadModel(char* filename){
 }
 
 void freeModel(STLModel* model){
-    free_stl(model);  
+    free_stl(model);
+    free(model); 
 }
 
 void renderModel(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation){
