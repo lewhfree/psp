@@ -12,7 +12,7 @@ int callback_thread(SceSize args, void *argp) {
     sceKernelSleepThreadCB();
     return 0;
 }
-int setup_callbacks(void) {
+int boilerplate(void) {
     int thid = sceKernelCreateThread("update_thread", callback_thread, 0x11, 0xFA0, 0, 0);
     if(thid >= 0)
         sceKernelStartThread(thid, 0, 0);

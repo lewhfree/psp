@@ -1,11 +1,15 @@
-#include "stlloader.h"
+#include "../include/stlloader.h"
 #include <pspiofilemgr.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <pspdebug.h>
 #include <math.h>
 #include <malloc.h>
+#include <pspgu.h>
+#include <pspgum.h>
+#include <pspkernel.h>
+#include <stdlib.h>
+
 unsigned int normalToColor(float nx, float ny, float nz) {
     float len = sqrtf(nx * nx + ny * ny + nz * nz);
     if (len > 0.0f) {
@@ -91,4 +95,42 @@ void free_stl(STLModel* model) {
         model->vertices = NULL;
     }
     model->triangleCount = 0;
+}
+
+STLModel* loadModel(char* filename){
+    STLModel* model = malloc(sizeof(STLModel));
+    if(!load_binary_stl(filename, model)) {
+        model->triangles = NULL;
+        model->vertices = NULL;
+        model->triangleCount = 0;
+    }
+    
+    if(model->triangleCount == 0) {
+        sceKernelDelayThread(3000000);
+        sceKernelExitGame();
+    }
+    return model;
+}
+
+void freeModel(STLModel* model){
+    free_stl(model);
+    free(model); 
+}
+
+void renderModel(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation){
+    if(!model || !model->vertices || model->triangleCount == 0) {
+        return; // Nothing to render
+    }
+    
+    sceGumMatrixMode(GU_MODEL);
+    sceGumLoadIdentity();
+    sceGumTranslate(&position);
+    sceGumRotateXYZ(&rotation);
+    
+    sceGumDrawArray(GU_TRIANGLES,
+        GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_NORMAL_32BITF | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
+        model->triangleCount * 3,
+        0,
+        model->vertices  // Use model's own vertices
+    );
 }

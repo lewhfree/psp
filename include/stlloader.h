@@ -1,6 +1,7 @@
 #ifndef STL_LOADER_H
 #define STL_LOADER_H
 #include <stdint.h>
+#include <pspgu.h>
 
 typedef struct {
   float x, y, z;
@@ -28,4 +29,8 @@ typedef struct {
 int load_binary_stl(const char* filename, STLModel* outModel);
 void free_stl(STLModel* model);
 void convert_model_triangles_to_vertices(STLModel* model); // New function
+
+STLModel* loadModel(char* filename);
+void freeModel(STLModel* model);
+void renderModel(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation);
 #endif

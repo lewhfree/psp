@@ -11,7 +11,8 @@
 
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
-#include "include/render_model.h"
+#include "include/graphics_setup.h"
+#include "include/ground.h"
 
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
@@ -19,8 +20,6 @@
 #define ANGLE_STEP (0.1f)
 #define GRIDW 10
 #define GRIDH 10
-#define GROUNDSIZE 200
-#define VIEW_DISTANCE 1000.0f
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
@@ -28,7 +27,7 @@ static unsigned int __attribute__((aligned(16))) list[262144];
 int main(int argc, char *argv[]) {
     (void)argc;
     (void)argv; //use this to later fix paths. full path needed rn, first argument is path to exe
-    setup_callbacks();
+    boilerplate();
     SceCtrlData pad;
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
@@ -38,10 +37,6 @@ int main(int argc, char *argv[]) {
     STLModel *groundArray[GRIDW][GRIDH];
     char *filenames[GRIDW][GRIDH];
     uint8_t isLoaded[GRIDW][GRIDH];
-    // filenames[0][0] = "ms0:/PSP/GAME/hello/plane0101.stl";
-    // filenames[0][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
-    // filenames[1][0] = "ms0:/PSP/GAME/hello/plane0102.stl";
-    // filenames[1][1] = "ms0:/PSP/GAME/hello/plane0101.stl";
     for(int i = 0; i < GRIDW; i++){
         for(int j = 0; j < GRIDH; j++){
             filenames[i][j] = "ms0:/PSP/GAME/hello/plane0102.stl";
@@ -55,28 +50,7 @@ int main(int argc, char *argv[]) {
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* zbp  = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_4444);
 
-    sceGuInit();
-    sceGuStart(GU_DIRECT, list);
-    sceGuDrawBuffer(GU_PSM_5650, fbp0, BUF_WIDTH);
-    sceGuDispBuffer(SCR_WIDTH, SCR_HEIGHT, fbp1, BUF_WIDTH);
-    sceGuDepthBuffer(zbp, BUF_WIDTH);
-    sceGuOffset(2048 - (SCR_WIDTH / 2), 2048 - (SCR_HEIGHT / 2));
-    sceGuViewport(2048, 2048, SCR_WIDTH, SCR_HEIGHT);
-    sceGuDepthRange(65535, 0);
-    sceGuScissor(0, 0, SCR_WIDTH, SCR_HEIGHT);
-    sceGuEnable(GU_SCISSOR_TEST);
-    sceGuDepthFunc(GU_GEQUAL);
-    sceGuEnable(GU_DEPTH_TEST);
-    sceGuFrontFace(GU_CCW);
-    sceGuShadeModel(GU_SMOOTH);
-    sceGuEnable(GU_CULL_FACE);
-    sceGuDisable(GU_TEXTURE_2D);
-    sceGuEnable(GU_CLIP_PLANES);
-    sceGuFinish();
-    sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
-
-    sceDisplayWaitVblankStart();
-    sceGuDisplay(GU_TRUE);
+    graphicsSetup(fbp0, fbp1, zbp, list);
 
     float playerZ = -20.0f;
     float playerX = 0.0f;
@@ -156,29 +130,7 @@ int main(int argc, char *argv[]) {
         ScePspFVector3 modelpos = {0, 10.0f, 0};
         ScePspFVector3 modelrot = {pi32, 0.0f, 0.0f};
         renderModel(teapot, modelpos, modelrot);
-
-        for(int i = 0; i < GRIDW; i++){
-            for (int j = 0; j < GRIDH; j++){
-                ScePspFVector3 platePos = {GROUNDSIZE * i, 0, GROUNDSIZE * j};
-                ScePspFVector3 plateRot = {pi32, 0, 0};
-                float distance = sqrtf(powf(platePos.x - eye.x, 2) + powf(platePos.y - eye.y, 2) + powf(platePos.z - eye.z, 2));
-                if(isLoaded[i][j]){
-                    renderModel(groundArray[i][j], platePos, plateRot);
-                    if((distance > VIEW_DISTANCE) && (isLoaded[i][j])){
-                        freeModel(groundArray[i][j]);
-                        groundArray[i][j] = NULL;
-                        isLoaded[i][j] = 0;
-                    }
-                } else {
-                    if((distance < VIEW_DISTANCE) && !(isLoaded[i][j])){
-                        STLModel* temp = loadModel(filenames[i][j]);
-                        groundArray[i][j] = temp;
-                        isLoaded[i][j] = 1;
-                    }
-                }
-            }
-        }
-        //freeing
+        renderGround(GRIDW, GRIDH, groundArray, filenames, isLoaded, eye);
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();
