@@ -4,12 +4,8 @@
 #include <pspgu.h>
 
 typedef struct {
-  float x, y, z;
-} Vec3;
-
-typedef struct {
-  Vec3 normal;
-  Vec3 v1, v2, v3;
+  ScePspFVector3 normal;
+  ScePspFVector3 v1, v2, v3;
 } Triangle;
 
 // Add vertex structure here since it's part of the model now
@@ -30,7 +26,7 @@ int load_binary_stl(const char* filename, STLModel* outModel);
 void free_stl(STLModel* model);
 void convert_model_triangles_to_vertices(STLModel* model); // New function
 
-STLModel* loadModel(char* filename);
-void freeModel(STLModel* model);
-void renderModel(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation);
+STLModel* loadSTL(char* filename);
+void freeSTL(STLModel* model);
+void renderSTL(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation);
 #endif

@@ -12,8 +12,9 @@
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
 #include "include/graphics_setup.h"
-#include "include/ground.h"
-
+// #include "include/ground.h"
+#include "include/render.h"
+#include "psptypes.h"
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
@@ -33,18 +34,18 @@ int main(int argc, char *argv[]) {
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 
    
-    STLModel* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl");
-    STLModel *groundArray[GRIDW][GRIDH];
-    char *filenames[GRIDW][GRIDH];
-    uint8_t isLoaded[GRIDW][GRIDH];
-    for(int i = 0; i < GRIDW; i++){
-        for(int j = 0; j < GRIDH; j++){
-            filenames[i][j] = "ms0:/PSP/GAME/hello/plane0102.stl";
-            STLModel * temp = loadModel(filenames[i][j]);
-            groundArray[i][j] = temp;
-            isLoaded[i][j] = 1;
-        }
-    }
+    Model* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 0, 0}, (ScePspFVector3){0, 0, 0});
+    // Model* groundArray[GRIDW][GRIDH];
+    // char *filenames[GRIDW][GRIDH];
+    // uint8_t isLoaded[GRIDW][GRIDH];
+    // for(int i = 0; i < GRIDW; i++){
+    //     for(int j = 0; j < GRIDH; j++){
+    //         filenames[i][j] = "ms0:/PSP/GAME/hello/plane0102.stl";
+    //         Model* temp = loadModel(filenames[i][j], (ScePspFVector3){i*200, 0, j*200}, (ScePspFVector3){0, 0, 0});
+    //         groundArray[i][j] = temp;
+    //         isLoaded[i][j] = 1;
+    //     }
+    // }
     
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
     float playerCenterX = 0.0f;
     float playerCenterY = 0.0f;
     float playerCenterZ = 0.0f;
-    float pi32 = 3 * GU_PI / 2;    
+    // float pi32 = 3 * GU_PI / 2;    
 
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
@@ -127,16 +128,16 @@ int main(int argc, char *argv[]) {
         ScePspFVector3 up = {0.0f, 1.0f, 0.0f};
         sceGumLookAt(&eye, &center, &up);
 
-        ScePspFVector3 modelpos = {0, 10.0f, 0};
-        ScePspFVector3 modelrot = {pi32, 0.0f, 0.0f};
-        renderModel(teapot, modelpos, modelrot);
-        renderGround(GRIDW, GRIDH, groundArray, filenames, isLoaded, eye);
+        // ScePspFVector3 modelpos = {0, 10.0f, 0};
+        // ScePspFVector3 modelrot = {pi32, 0.0f, 0.0f};
+        renderModel(teapot);
+        // renderGround(GRIDW, GRIDH, groundArray, filenames, iLoaded, eye);
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();
         sceGuSwapBuffers();
     }
 
-    free_stl(teapot);
+    freeModel(teapot);
     return 0;
 }

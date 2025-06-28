@@ -97,7 +97,7 @@ void free_stl(STLModel* model) {
     model->triangleCount = 0;
 }
 
-STLModel* loadModel(char* filename){
+STLModel* loadSTL(char* filename){
     STLModel* model = malloc(sizeof(STLModel));
     if(!load_binary_stl(filename, model)) {
         model->triangles = NULL;
@@ -112,12 +112,12 @@ STLModel* loadModel(char* filename){
     return model;
 }
 
-void freeModel(STLModel* model){
+void freeSTL(STLModel* model){
     free_stl(model);
     free(model); 
 }
 
-void renderModel(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation){
+void renderSTL(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation){
     if(!model || !model->vertices || model->triangleCount == 0) {
         return; // Nothing to render
     }

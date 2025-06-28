@@ -7,7 +7,7 @@ add_executable(${PROJECT_NAME} main.c
     src/stlloader.c
     src/boilerplate.c
     src/graphics_setup.c
-    src/ground.c)
+    src/render.c)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     pspdebug
