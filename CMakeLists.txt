@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(hello)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 include_directories(include)
 add_executable(${PROJECT_NAME} main.c
     src/stlloader.c

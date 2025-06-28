@@ -3,49 +3,33 @@
 #include <pspgu.h>
 #include <pspgum.h>
 #include <pspdebug.h>
-#include <pspctrl.h> //keypad
-#include <string.h> //strcp, file path
-#include <stdlib.h> //malloc/free
-#include <inttypes.h> //uint
-#include <math.h> //sqrt sin
+#include <pspctrl.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <math.h>
 
 #include "include/stlloader.h"
 #include "include/boilerplate.h"
 #include "include/graphics_setup.h"
-// #include "include/ground.h"
 #include "include/render.h"
 #include "psptypes.h"
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
 #define ANGLE_STEP (0.1f)
-#define GRIDW 10
-#define GRIDH 10
+#define MAXMODELS 100
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
-
-int main(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv; //use this to later fix paths. full path needed rn, first argument is path to exe
+Model* ALLMODELS[MAXMODELS];
+int main() {
     boilerplate();
     SceCtrlData pad;
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 
-   
-    Model* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 0, 0}, (ScePspFVector3){0, 0, 0});
-    // Model* groundArray[GRIDW][GRIDH];
-    // char *filenames[GRIDW][GRIDH];
-    // uint8_t isLoaded[GRIDW][GRIDH];
-    // for(int i = 0; i < GRIDW; i++){
-    //     for(int j = 0; j < GRIDH; j++){
-    //         filenames[i][j] = "ms0:/PSP/GAME/hello/plane0102.stl";
-    //         Model* temp = loadModel(filenames[i][j], (ScePspFVector3){i*200, 0, j*200}, (ScePspFVector3){0, 0, 0});
-    //         groundArray[i][j] = temp;
-    //         isLoaded[i][j] = 1;
-    //     }
-    // }
+    float pi32 = 3 * GU_PI / 2;    
+    Model* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, 0}, (ScePspFVector3){pi32, 0, 0});
     
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
@@ -62,7 +46,6 @@ int main(int argc, char *argv[]) {
     float playerCenterX = 0.0f;
     float playerCenterY = 0.0f;
     float playerCenterZ = 0.0f;
-    // float pi32 = 3 * GU_PI / 2;    
 
     while (1) {
         sceCtrlReadBufferPositive(&pad, 1);
@@ -112,8 +95,8 @@ int main(int argc, char *argv[]) {
 
         sceGuStart(GU_DIRECT, list);
 
-        // sceGuClearColor(0xFFED9564);
-        sceGuClearColor(0x00000000);
+        sceGuClearColor(0xFFED9564);
+        // sceGuClearColor(0x00000000);
         sceGuClearDepth(0);
         sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
 
@@ -123,15 +106,12 @@ int main(int argc, char *argv[]) {
 
         sceGumMatrixMode(GU_VIEW);
         sceGumLoadIdentity();
-        ScePspFVector3 eye = realEye;      // Camera position
-        ScePspFVector3 center = realCenter;   // Where the camera is looking
+        ScePspFVector3 eye = realEye;
+        ScePspFVector3 center = realCenter;
         ScePspFVector3 up = {0.0f, 1.0f, 0.0f};
         sceGumLookAt(&eye, &center, &up);
 
-        // ScePspFVector3 modelpos = {0, 10.0f, 0};
-        // ScePspFVector3 modelrot = {pi32, 0.0f, 0.0f};
         renderModel(teapot);
-        // renderGround(GRIDW, GRIDH, groundArray, filenames, iLoaded, eye);
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();

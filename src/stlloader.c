@@ -131,6 +131,6 @@ void renderSTL(STLModel* model, ScePspFVector3 position, ScePspFVector3 rotation
         GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_NORMAL_32BITF | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
         model->triangleCount * 3,
         0,
-        model->vertices  // Use model's own vertices
+        model->vertices
     );
 }

@@ -8,7 +8,6 @@ typedef struct {
   ScePspFVector3 v1, v2, v3;
 } Triangle;
 
-// Add vertex structure here since it's part of the model now
 struct Vertex {
     float u, v;
     unsigned int color;
@@ -19,12 +18,12 @@ struct Vertex {
 typedef struct {
   uint32_t triangleCount;
   Triangle* triangles;
-  struct Vertex* vertices;  // Each model has its own vertices
+  struct Vertex* vertices;
 } STLModel;
 
 int load_binary_stl(const char* filename, STLModel* outModel);
 void free_stl(STLModel* model);
-void convert_model_triangles_to_vertices(STLModel* model); // New function
+void convert_model_triangles_to_vertices(STLModel* model);
 
 STLModel* loadSTL(char* filename);
 void freeSTL(STLModel* model);
