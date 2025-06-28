@@ -8,10 +8,10 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include "include/stlloader.h"
 #include "include/boilerplate.h"
 #include "include/graphics_setup.h"
-#include "include/render.h"
+// #include "include/render.h"
+#include "include/renderlist.h"
 #include "psptypes.h"
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
@@ -21,16 +21,13 @@
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
-Model* ALLMODELS[MAXMODELS];
 int main() {
     boilerplate();
     SceCtrlData pad;
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
-
-    float pi32 = 3 * GU_PI / 2;    
-    Model* teapot = loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, 0}, (ScePspFVector3){pi32, 0, 0});
-    
+    Modellist* modelList = initList();
+    addModel(loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, 0}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);   
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* zbp  = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_4444);
@@ -110,14 +107,14 @@ int main() {
         ScePspFVector3 center = realCenter;
         ScePspFVector3 up = {0.0f, 1.0f, 0.0f};
         sceGumLookAt(&eye, &center, &up);
-
-        renderModel(teapot);
+        renderAll(modelList);
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();
         sceGuSwapBuffers();
     }
 
-    freeModel(teapot);
+    // freeModel(models[0]);
+    // models[0]  = NULL;
     return 0;
 }
