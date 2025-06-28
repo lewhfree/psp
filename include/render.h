@@ -13,7 +13,8 @@ typedef struct {
   ScePspFVector3 position;
   ScePspFVector3 rotation;
   STLModel* model;
-  CubeCollider colliders[10];  
+  CubeCollider colliders[10];
+  int isValid;  
 } Model;
 void freeModel(Model* model);
 Model* loadModel(char* filename, ScePspFVector3 initPos, ScePspFVector3 initRot);

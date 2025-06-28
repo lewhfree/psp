@@ -16,5 +16,6 @@ Model* loadModel(char* filename, ScePspFVector3 initPos, ScePspFVector3 initRot)
   temp->position = initPos;
   temp->rotation = initRot;
   temp->model = loadSTL(filename);
+  temp->isValid = 1;
   return temp;    
 }

@@ -113,7 +113,6 @@ int main() {
         sceDisplayWaitVblankStart();
         sceGuSwapBuffers();
     }
-
     // freeModel(models[0]);
     // models[0]  = NULL;
     return 0;

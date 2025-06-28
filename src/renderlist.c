@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #define MAXMODELS 100
 void renderAll(Modellist* modelList){
-  renderModel(&(modelList->models[0]));
+  int numModels = modelList->firstItem + 1;
+  for(int i = 0; i < numModels; i++){
+    renderModel(&(modelList->models[i]));
+  }
 }
 
 Modellist* initList(){
@@ -15,4 +18,9 @@ Modellist* initList(){
 void addModel(Model* newModel, Modellist* modelList){
   modelList->firstItem++;
   modelList->models[modelList->firstItem] = *newModel;
+}
+
+void deleteModel(unsigned int index, Modellist* modelList){
+  modelList->models[index].isValid = 0;
+  freeModel(&modelList->models[index]);
 }
