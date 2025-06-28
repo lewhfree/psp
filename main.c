@@ -10,24 +10,24 @@
 
 #include "include/boilerplate.h"
 #include "include/graphics_setup.h"
-// #include "include/render.h"
 #include "include/renderlist.h"
 #include "psptypes.h"
 #define BUF_WIDTH  (512)
 #define SCR_WIDTH  (480)
 #define SCR_HEIGHT (272)
 #define ANGLE_STEP (0.1f)
-#define MAXMODELS 100
 PSP_MODULE_INFO("Hello World", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
 static unsigned int __attribute__((aligned(16))) list[262144];
 int main() {
+    unsigned int frameCounter = 0;
     boilerplate();
     SceCtrlData pad;
     sceCtrlSetSamplingCycle(0);
     sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
     Modellist* modelList = initList();
     addModel(loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, 0}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);   
+    addModel(loadModel("ms0:/PSP/GAME/hello/plane0101.stl", (ScePspFVector3){0, 0, 0}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* zbp  = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_4444);
@@ -45,6 +45,7 @@ int main() {
     float playerCenterZ = 0.0f;
 
     while (1) {
+        frameCounter++;
         sceCtrlReadBufferPositive(&pad, 1);
 
         float rawX = pad.Lx - 128.0f;
@@ -107,7 +108,7 @@ int main() {
         ScePspFVector3 center = realCenter;
         ScePspFVector3 up = {0.0f, 1.0f, 0.0f};
         sceGumLookAt(&eye, &center, &up);
-        renderAll(modelList);
+        renderAll(modelList, eye);
         sceGuFinish();
         sceGuSync(GU_SYNC_FINISH, GU_SYNC_WHAT_DONE);
         sceDisplayWaitVblankStart();

@@ -1,5 +1,7 @@
-IMMEDIATE GOAL:
-Implement a list of all objects, render all models in the list every frame. Then implement tile loading based on this.
+Need to deallocate chuncks to far from user. Model struct has a pointer to STLModel, which is allocated in stlloader.h
+good, can allocate and free model without having to mess with the array of objects.
+I think if we were going to have 1m models on the ground, it would be better to check every few hundred frames how long a model has been invalid
+swap and pop the array of pointers to models. Change modellist to use Model* models[maxmodels], will have to allocate on the heap and figure out a way to free the stuff.
 
 [] - Make the ground system have checking if you are within a radius of the plane to load it.
 [] - tiling ground system. Should load an stl for each tile, just planes for now. see down below
