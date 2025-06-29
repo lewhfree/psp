@@ -2,6 +2,11 @@
 #include "../include/render.h"
 #include <stdlib.h>
 #include <math.h>
+
+#define CULLDIST 250.0f
+#define FREEDIST 350.0f
+#define ALLOCDIST 300.0f
+
 float distanceBetweenVectors(ScePspFVector3 a, ScePspFVector3 b) {
   float dx = a.x - b.x;
   float dy = a.y - b.y;
@@ -14,14 +19,18 @@ void renderAll(Modellist* modelList, ScePspFVector3 eye){
   for(int i = 0; i < numModels; i++){
     float distToCamera = distanceBetweenVectors(eye, modelList->models[i]->position);
     if(modelList->models[i]->isValid){
-      if(distToCamera <= 1000.0f){
+      if(distToCamera <= CULLDIST){
         renderModel(modelList->models[i]);
-      } else if (distToCamera > 2000.0f){
+      } else if (distToCamera > FREEDIST){
         //free the memory
+        freeSTL(modelList->models[i]->model);
+        modelList->models[i]->isValid = 0;
       }
     } else {
-      if(distToCamera< 1200.0f) {
+      if(distToCamera < ALLOCDIST) {
         //allocate new mem
+        modelList->models[i]->model = loadSTL(modelList->models[i]->filename);
+        modelList->models[i]->isValid = 1;
       }
     }
   }

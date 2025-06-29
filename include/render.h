@@ -10,6 +10,7 @@ typedef struct {
 } CubeCollider;
 
 typedef struct {
+  char* filename;
   ScePspFVector3 position;
   ScePspFVector3 rotation;
   STLModel* model;

@@ -19,11 +19,8 @@ typedef struct {
   uint32_t triangleCount;
   Triangle* triangles;
   struct Vertex* vertices;
+  unsigned int isLoading;
 } STLModel;
-
-int load_binary_stl(const char* filename, STLModel* outModel);
-void free_stl(STLModel* model);
-void convert_model_triangles_to_vertices(STLModel* model);
 
 STLModel* loadSTL(char* filename);
 void freeSTL(STLModel* model);

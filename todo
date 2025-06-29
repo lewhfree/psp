@@ -1,7 +1,5 @@
-Need to deallocate chuncks to far from user. Model struct has a pointer to STLModel, which is allocated in stlloader.h
-good, can allocate and free model without having to mess with the array of objects.
-I think if we were going to have 1m models on the ground, it would be better to check every few hundred frames how long a model has been invalid
-swap and pop the array of pointers to models. Change modellist to use Model* models[maxmodels], will have to allocate on the heap and figure out a way to free the stuff.
+The next step is to implement async loading. Model should get a new flag called isLoading. When you start to load it, you set the flag to one. When the flag is 0, the model is loaded
+Keep this flag seperate from the isvalid. Isvalid is if the memory has been allocated. Isloading is for async laoding. 
 
 [] - Make the ground system have checking if you are within a radius of the plane to load it.
 [] - tiling ground system. Should load an stl for each tile, just planes for now. see down below

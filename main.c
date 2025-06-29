@@ -28,6 +28,10 @@ int main() {
     Modellist* modelList = initList();
     addModel(loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, 0}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);   
     addModel(loadModel("ms0:/PSP/GAME/hello/plane0101.stl", (ScePspFVector3){0, 0, 0}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);
+    addModel(loadModel("ms0:/PSP/GAME/hello/plane0101.stl", (ScePspFVector3){0, 0, -200}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);
+    addModel(loadModel("ms0:/PSP/GAME/hello/plane0101.stl", (ScePspFVector3){0, 0, -400}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);
+    addModel(loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, -200}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);   
+    addModel(loadModel("ms0:/PSP/GAME/hello/teapot.stl", (ScePspFVector3){0, 10, -400}, (ScePspFVector3){GU_PI/2*3, 0, 0}), modelList);   
     void* fbp0 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* fbp1 = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_8888);
     void* zbp  = guGetStaticVramBuffer(BUF_WIDTH, SCR_HEIGHT, GU_PSM_4444);

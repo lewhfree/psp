@@ -26,21 +26,39 @@ unsigned int normalToColor(float nx, float ny, float nz) {
     return (a << 24) | (b << 16) | (g << 8) | r;
 }
 
-int load_binary_stl(const char *filename, STLModel *outModel) {
-    SceUID fileUID = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+void convert_model_triangles_to_vertices(STLModel* model) {
+    for (unsigned int i = 0; i < model->triangleCount; ++i) {
+        const Triangle* tri = &model->triangles[i];
+        float nx = tri->normal.x;
+        float ny = tri->normal.y;
+        float nz = tri->normal.z;
+        unsigned int color = normalToColor(nx, ny, nz);
+
+        model->vertices[i * 3 + 0] = (struct Vertex){0, 0, color, nx, ny, nz, tri->v1.x, tri->v1.y, tri->v1.z};
+        model->vertices[i * 3 + 1] = (struct Vertex){0, 0, color, nx, ny, nz, tri->v2.x, tri->v2.y, tri->v2.z};
+        model->vertices[i * 3 + 2] = (struct Vertex){0, 0, color, nx, ny, nz, tri->v3.x, tri->v3.y, tri->v3.z};
+    }
+}
+
+STLModel* loadSTL(char* filename){
+    STLModel* model = malloc(sizeof(STLModel));
+
+    SceUID fileUID = sceIoOpen(filename, PSP_O_RDONLY | PSP_O_NOWAIT, 0777);
     if(fileUID < 0){
-        return 0;
+        return NULL;
     }
     
-    outModel->triangles = NULL;
-    outModel->vertices = NULL;
-    outModel->triangleCount = 0;
+    model->triangles = NULL;
+    model->vertices = NULL;
+    model->triangleCount = 0;
     
     sceIoLseek(fileUID, 80, SEEK_SET);
-    uint32_t count = 0;
+    unsigned int count = 0;
     uint8_t buf[4];
 
-    sceIoRead(fileUID, &buf, sizeof(uint8_t) * 4);
+    sceIoReadAsync(fileUID, &buf, sizeof(uint8_t) * 4);
+    sceIoWaitAsync(fileUID, NULL);
+    model->isLoading = 1;
     count = (buf[0]) | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
     
     Triangle* tris = malloc(sizeof(Triangle) * count);
@@ -56,36 +74,21 @@ int load_binary_stl(const char *filename, STLModel *outModel) {
         return 0;
     }
 
-    for (uint32_t i = 0; i < count; ++i){
+    for (unsigned int i = 0; i < count; ++i){
         sceIoRead(fileUID, &tris[i], sizeof(float) * 4 * 3);
         sceIoLseek(fileUID, 2, SEEK_CUR);
     }
     
-    outModel->triangleCount = count;
-    outModel->triangles = tris;
-    outModel->vertices = vertices;
+    model->triangleCount = count;
+    model->triangles = tris;
+    model->vertices = vertices;
     sceIoClose(fileUID);
 
-    convert_model_triangles_to_vertices(outModel);
-    
-    return 1;
+    convert_model_triangles_to_vertices(model);
+    return model;
 }
 
-void convert_model_triangles_to_vertices(STLModel* model) {
-    for (uint32_t i = 0; i < model->triangleCount; ++i) {
-        const Triangle* tri = &model->triangles[i];
-        float nx = tri->normal.x;
-        float ny = tri->normal.y;
-        float nz = tri->normal.z;
-        unsigned int color = normalToColor(nx, ny, nz);
-
-        model->vertices[i * 3 + 0] = (struct Vertex){0, 0, color, nx, ny, nz, tri->v1.x, tri->v1.y, tri->v1.z};
-        model->vertices[i * 3 + 1] = (struct Vertex){0, 0, color, nx, ny, nz, tri->v2.x, tri->v2.y, tri->v2.z};
-        model->vertices[i * 3 + 2] = (struct Vertex){0, 0, color, nx, ny, nz, tri->v3.x, tri->v3.y, tri->v3.z};
-    }
-}
-
-void free_stl(STLModel* model) {
+void freeSTL(STLModel* model){
     if(model->triangles) {
         free(model->triangles);
         model->triangles = NULL;
@@ -95,25 +98,6 @@ void free_stl(STLModel* model) {
         model->vertices = NULL;
     }
     model->triangleCount = 0;
-}
-
-STLModel* loadSTL(char* filename){
-    STLModel* model = malloc(sizeof(STLModel));
-    if(!load_binary_stl(filename, model)) {
-        model->triangles = NULL;
-        model->vertices = NULL;
-        model->triangleCount = 0;
-    }
-    
-    if(model->triangleCount == 0) {
-        sceKernelDelayThread(3000000);
-        sceKernelExitGame();
-    }
-    return model;
-}
-
-void freeSTL(STLModel* model){
-    free_stl(model);
     free(model); 
 }
 
